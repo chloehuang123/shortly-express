@@ -78,11 +78,29 @@ app.post('/links',
 /************************************************************/
 
 app.post('/login', (req, res) => {
-  res.send('POST request to the homepage');
+  var user = models.Users.get({'username': req.body.username, 'password': req.body.password});
+
+  if (models.Users.compare(req.body.password, users.password, users.salt)) {
+    res.redirect('/');
+  } else {
+    res.json('Username or password is incorrect');
+  }
 });
 
 app.post('/signup', (req, res) => {
-  res.send('POST request to the homepage');
+  var username = req.body.username;
+  var password = req.body.password;
+
+  models.Users.create({
+    'username': username,
+    'password': password
+  }).then(() => {
+    res.redirect('/login');
+  }).catch(err=> {
+    res.sendStatus(404).json('Error!');
+  });
+
+  res.json('User created');
 });
 
 /************************************************************/
