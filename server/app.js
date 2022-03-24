@@ -13,12 +13,26 @@ app.use(partials());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, '../public')));
+app.use((req, res, next) => {
+  console.log(req.originalUrl);
+  next();
+});
 
 
 
 app.get('/',
   (req, res) => {
     res.render('index');
+  });
+
+app.get('/signup',
+  (req, res) => {
+    res.render('signup');
+  });
+
+app.get('/login',
+  (req, res) => {
+    res.render('login');
   });
 
 app.get('/create',
@@ -78,29 +92,30 @@ app.post('/links',
 /************************************************************/
 
 app.post('/login', (req, res) => {
-  var user = models.Users.get({'username': req.body.username, 'password': req.body.password});
 
-  if (models.Users.compare(req.body.password, users.password, users.salt)) {
-    res.redirect('/');
-  } else {
-    res.json('Username or password is incorrect');
-  }
+  return models.Users.get({'username': req.body.username})
+    .then((user) => {
+      if (models.Users.compare(req.body.password, user.password, user.salt)) {
+        console.log('compare');
+        res.redirect('/');
+      } else {
+        res.redirect('/login');
+      }
+    })
+    .catch(err => res.redirect('/login'));
+
 });
 
 app.post('/signup', (req, res) => {
-  var username = req.body.username;
-  var password = req.body.password;
-
-  models.Users.create({
-    'username': username,
-    'password': password
-  }).then(() => {
-    res.redirect('/login');
+  var user = {};
+  user.username = req.body.username;
+  user.password = req.body.password;
+  console.log(user);
+  return models.Users.create(user).then(() => {
+    res.redirect('/');
   }).catch(err=> {
-    res.sendStatus(404).json('Error!');
+    res.redirect('/signup');
   });
-
-  res.json('User created');
 });
 
 /************************************************************/
