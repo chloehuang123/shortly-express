@@ -3,6 +3,7 @@ const path = require('path');
 const utils = require('./lib/hashUtils');
 const partials = require('express-partials');
 const Auth = require('./middleware/auth');
+const cookieParser = require('./middleware/cookieParser');
 const models = require('./models');
 
 const app = express();
@@ -13,10 +14,11 @@ app.use(partials());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, '../public')));
-app.use((req, res, next) => {
-  console.log(req.originalUrl);
-  next();
-});
+// app.use((req, res, next) => {
+//   console.log(req.originalUrl);
+//   next();
+// });
+//app.use((req, res, next) => { console.log(req.headers.Cookie); next(); });
 
 
 
@@ -96,22 +98,19 @@ app.post('/login', (req, res) => {
   return models.Users.get({'username': req.body.username})
     .then((user) => {
       if (models.Users.compare(req.body.password, user.password, user.salt)) {
-        console.log('compare');
         res.redirect('/');
       } else {
         res.redirect('/login');
       }
     })
     .catch(err => res.redirect('/login'));
-
 });
 
 app.post('/signup', (req, res) => {
   var user = {};
   user.username = req.body.username;
   user.password = req.body.password;
-  console.log(user);
-  return models.Users.create(user).then(() => {
+  models.Users.create(user).then(() => {
     res.redirect('/');
   }).catch(err=> {
     res.redirect('/signup');
