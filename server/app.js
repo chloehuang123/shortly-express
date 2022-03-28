@@ -14,6 +14,8 @@ app.use(partials());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, '../public')));
+app.use(cookieParser);
+app.use(Auth.createSession);
 // app.use((req, res, next) => {
 //   console.log(req.originalUrl);
 //   next();
@@ -94,10 +96,11 @@ app.post('/links',
 /************************************************************/
 
 app.post('/login', (req, res) => {
-
+  console.log(req);
   return models.Users.get({'username': req.body.username})
     .then((user) => {
       if (models.Users.compare(req.body.password, user.password, user.salt)) {
+        models.Sessions.update(req.session.id, { userId: user.id });
         res.redirect('/');
       } else {
         res.redirect('/login');
@@ -110,7 +113,8 @@ app.post('/signup', (req, res) => {
   var user = {};
   user.username = req.body.username;
   user.password = req.body.password;
-  models.Users.create(user).then(() => {
+  models.Users.create(user).then((user) => {
+    models.Sessions.update({ hash: req.session.hash }, { userId: user.insertId });
     res.redirect('/');
   }).catch(err=> {
     res.redirect('/signup');

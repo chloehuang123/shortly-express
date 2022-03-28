@@ -6,8 +6,8 @@ const parseCookies = (req, res, next) => {
       var cookieSplit = singleCookies[i].split('=');
       cookieObj[cookieSplit[0].trim()] = cookieSplit[1];
     }
-    req.cookies = cookieObj;
   }
+  req.cookies = cookieObj;
   next();
 };
 

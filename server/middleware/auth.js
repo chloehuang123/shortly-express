@@ -3,7 +3,7 @@ const Promise = require('bluebird');
 
 module.exports.createSession = (req, res, next) => {
   //access the parsed cookies on the req
-  if (Object.keys(req.cookies).length === 0) {
+  if (!req.cookies.shortlyid) {
     return models.Sessions.create()
       .then( InsQuery => {
         let options = {
@@ -13,13 +13,12 @@ module.exports.createSession = (req, res, next) => {
       })
       .then( session => {
         req.session = session;
-        res.cookies.shortlyid = { value: session.hash };
+        res.cookie('shortlyid', `${session.hash}`);
         next();
       })
       .catch(err => console.log(err));
-  } else if (Object.keys(req.cookies).length !== 0) {
+  } else {
     // get cookie from request through dot access
-
     // check if the cookie corresponds to a session
     models.Sessions.get({ hash: req.cookies.shortlyid })
       .then(session => {
@@ -28,19 +27,18 @@ module.exports.createSession = (req, res, next) => {
       })
       .catch( err => models.Sessions.create() )
       .then(InsQuery => {
-        console.log(InsQuery);
         let options = {
           id: InsQuery.insertId
         };
         return models.Sessions.get(options);
       })
       .then( session => {
-        console.log(session);
+        // console.log(session);
         req.session = session;
-        res.cookies.shortlyid = { value: session.hash };
+        res.cookie('shortlyid', `${session.hash}`);
         next();
       })
-      .catch(err => console.log(err));
+      .catch(err => console.log('err'));
     // create a new session and a new cookie
     // attach the session to the new cookie?
     // res.cookie get update with the new cookie
