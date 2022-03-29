@@ -163,7 +163,6 @@ describe('', function() {
         db.query(queryString, function(err, rows) {
           if (err) { return done (err); }
           var user = rows[0];
-          console.log(rows);
           expect(user.password).to.exist;
           expect(user.password).to.not.equal('Samantha');
           done();
@@ -505,6 +504,20 @@ describe('', function() {
       done();
     });
 
+    it('Stores the correct hash when a session is created', function(done) {
+      requestWithSession('http://127.0.0.1:4568/', function(err, res, body) {
+        if (err) { return done(err); }
+        console.log('response for test', res);
+        var queryString = 'SELECT * FROM sessions';
+        db.query(queryString, function(error, sessions) {
+          if (error) { return done(error); }
+          expect(sessions.hash).to.equal();
+          expect(sessions[0].userId).to.be.null;
+          done();
+        });
+      });
+    });
+
     it('saves a new session when the server receives a request', function(done) {
       requestWithSession('http://127.0.0.1:4568/', function(err, res, body) {
         if (err) { return done(err); }
@@ -593,6 +606,40 @@ describe('', function() {
       request('http://127.0.0.1:4568/links', function(error, res, body) {
         if (error) { return done(error); }
         expect(res.req.path).to.equal('/login');
+        done();
+      });
+    });
+  });
+
+  describe('Additional tests:', function() {
+    it('Creates and stores salt with the username', function(done) {
+      var options = {
+        'method': 'POST',
+        'uri': 'http://127.0.0.1:4568/signup',
+        'json': {
+          'username': 'Samantha',
+          'password': 'Samantha'
+        }
+      };
+      request(options, function(error, res, body) {
+        var queryString = 'SELECT salt FROM users';
+        db.query(queryString, function(err, salt) {
+          if (err) { done(err); }
+          var userSalt = salt[0];
+          expect(userSalt).to.exist;
+          done();
+        });
+      });
+    });
+
+    it('Has a method which handles logging out', function(done) {
+      var options = {
+        'method': 'POST',
+        'uri': 'http://127.0.0.1:4568/logout'
+      };
+
+      request(options, function(error, res, body) {
+        expect(res).to.exist;
         done();
       });
     });

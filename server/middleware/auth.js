@@ -33,7 +33,6 @@ module.exports.createSession = (req, res, next) => {
         return models.Sessions.get(options);
       })
       .then( session => {
-        // console.log(session);
         req.session = session;
         res.cookie('shortlyid', `${session.hash}`);
         next();
