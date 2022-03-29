@@ -5,8 +5,9 @@ const partials = require('express-partials');
 const Auth = require('./middleware/auth');
 const cookieParser = require('./middleware/cookieParser');
 const models = require('./models');
-
+const verifySession = require('./middleware/verifySession');
 const app = express();
+
 
 app.set('views', `${__dirname}/views`);
 app.set('view engine', 'ejs');
@@ -16,6 +17,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, '../public')));
 app.use(cookieParser);
 app.use(Auth.createSession);
+//app.use(verifySession.verify);
 // app.use((req, res, next) => {
 //   console.log(req.originalUrl);
 //   next();
@@ -23,9 +25,9 @@ app.use(Auth.createSession);
 //app.use((req, res, next) => { console.log(req.headers.Cookie); next(); });
 
 
-
 app.get('/',
   (req, res) => {
+    verifySession.verify(req, res);
     res.render('index');
   });
 
@@ -41,11 +43,13 @@ app.get('/login',
 
 app.get('/create',
   (req, res) => {
+    verifySession.verify(req, res);
     res.render('index');
   });
 
 app.get('/links',
   (req, res, next) => {
+    verifySession.verify(req, res);
     models.Links.getAll()
       .then(links => {
         res.status(200).send(links);
@@ -96,7 +100,6 @@ app.post('/links',
 /************************************************************/
 
 app.post('/login', (req, res) => {
-  console.log(req);
   return models.Users.get({'username': req.body.username})
     .then((user) => {
       if (models.Users.compare(req.body.password, user.password, user.salt)) {
@@ -110,6 +113,7 @@ app.post('/login', (req, res) => {
 });
 
 app.post('/signup', (req, res) => {
+  //console.log(req.body, res.body);
   var user = {};
   user.username = req.body.username;
   user.password = req.body.password;
@@ -119,6 +123,25 @@ app.post('/signup', (req, res) => {
   }).catch(err=> {
     res.redirect('/signup');
   });
+});
+
+app.get('/logout', (req, res) => {
+  //take the hash 'shortly id' from the request object
+  res.clearCookie('shortlyid');
+  models.Sessions.delete({ hash: req.cookies.shortlyid });
+  //use the hash to delete the session that corresponds to it from the sessions table
+  models.Sessions.create()
+    .then( (insQuery) => {
+      return models.Sessions.get({ id: insQuery.insertId });
+    })
+    .then( (session) => {
+      req.session = session;
+      res.cookie('shortlyid', `${session.hash}`);
+      res.redirect('/login');
+    })
+    .catch(err => console.log(err));
+  //remove the cookies from the response object
+
 });
 
 /************************************************************/

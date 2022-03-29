@@ -20,12 +20,12 @@ module.exports.createSession = (req, res, next) => {
   } else {
     // get cookie from request through dot access
     // check if the cookie corresponds to a session
-    models.Sessions.get({ hash: req.cookies.shortlyid })
+    return models.Sessions.get({ hash: req.cookies.shortlyid })
       .then(session => {
         req.session = session;
         next();
       })
-      .catch( err => models.Sessions.create() )
+      .catch( err => { return models.Sessions.create(); })
       .then(InsQuery => {
         let options = {
           id: InsQuery.insertId

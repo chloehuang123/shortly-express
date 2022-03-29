@@ -163,6 +163,7 @@ describe('', function() {
         db.query(queryString, function(err, rows) {
           if (err) { return done (err); }
           var user = rows[0];
+          console.log(rows);
           expect(user.password).to.exist;
           expect(user.password).to.not.equal('Samantha');
           done();
@@ -570,7 +571,7 @@ describe('', function() {
     });
   });
 
-  xdescribe('Privileged Access:', function() {
+  describe('Privileged Access:', function() {
 
     it('Redirects to login page if a user tries to access the main page and is not signed in', function(done) {
       request('http://127.0.0.1:4568/', function(error, res, body) {
